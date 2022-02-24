@@ -20,8 +20,10 @@ Get active accounts where Balance greater than 0 and calculate daily interest th
 Create Account Interest record for audit and monthly calculations
 
 ###calculateMonthlyInterest
+Use RequestParam to get month
 Get all Account Interest from 'audit' table for the month received in the request per account and sums up the interests
 Returns a list of Monthly Interest for all active accounts in data-store
+eg: http://localhost:8080/calculateMonthlyInterest?month=2021-09
 
 ###processAccountClosure
 Find Account and set Active to false and Close Date to now if Account still Active

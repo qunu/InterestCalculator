@@ -126,7 +126,7 @@ public class AccountService {
     public void closeAccount(CloseAccount request) {
         Optional<Account> accountOptional = accountRepo.findAllByBsbEqualsAndIdentificationEquals(request.getBsb(), request.getIdentification());
 
-        if (accountOptional.isPresent() && !accountOptional.get().isActive()) {
+        if (accountOptional.isPresent() && accountOptional.get().isActive()) {
             Account account = accountOptional.get();
             account.setActive(false);
             account.setCloseDate(LocalDate.now());
@@ -139,8 +139,8 @@ public class AccountService {
 
 
     /**
-     * Traverse through list of accounts and save Balance and update BalanceUpdate in data-store if accounts exists
-     * and BalanceUpdate in data-store is older than received BalanceDate
+     * Traverse through list of accounts and save Balance and update BalanceUpdateDate in data-store if accounts exists
+     * and BalanceUpdateDate in data-store is older than received BalanceDate
      */
     private void updateReceivedBalances(EndOfDayBalances request, LocalDate requestBalanceDate) {
         List<EndOfDayBalance> endOfDayBalances = request.getEndOfDayBalances();

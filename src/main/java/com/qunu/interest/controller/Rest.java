@@ -43,7 +43,7 @@ public class Rest {
         return ResponseEntity.ok().body(monthlyInterest);
     }
 
-    @PutMapping("/processAccountClosure")
+    @DeleteMapping("/processAccountClosure")
     public ResponseEntity processAccountClosure(@RequestBody CloseAccount request) {
         eventPublisher.publishEvent(request);
         return ResponseEntity.ok().build();

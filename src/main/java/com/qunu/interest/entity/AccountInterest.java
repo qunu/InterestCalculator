@@ -14,6 +14,7 @@ import java.time.LocalDate;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class AccountInterest {
 
     @Id

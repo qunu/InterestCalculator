@@ -45,11 +45,14 @@ public class AccountService {
 
         if (byId.isPresent()) {
             Account account = byId.get();
-            //
+
             if (!account.isActive()) {
                 account.setActive(true);
                 account.setOpeningDate(request.getOpeningDate());
-                accountRepo.save(account);
+                Account save = accountRepo.save(account);
+                log.info("Old Account reactivated {}", save);
+            } else {
+                log.info("Active Account already exists {}", account);
             }
             return;
         }
@@ -62,7 +65,8 @@ public class AccountService {
                 .active(true)
                 .build();
 
-        accountRepo.save(account);
+        Account save = accountRepo.save(account);
+        log.info("New Account created {}", save);
     }
 
     /**
@@ -83,6 +87,7 @@ public class AccountService {
         List<Account> allByBalanceGreaterThan = accountRepo.findAllByBalanceGreaterThanAndActiveTrue(BigDecimal.ZERO);
 
         if (CollectionUtils.isEmpty(allByBalanceGreaterThan)) {
+            log.info("No active Accounts in Data-store with positive balance");
             return;
         }
 
@@ -125,7 +130,8 @@ public class AccountService {
             Account account = accountOptional.get();
             account.setActive(false);
             account.setCloseDate(LocalDate.now());
-            accountRepo.save(account);
+            Account save = accountRepo.save(account);
+            log.info("Account closed {}", save);
         } else {
             log.info("No account exists or account already closed in Data-store for {} {}", request.getBsb(), request.getIdentification());
         }
@@ -146,7 +152,8 @@ public class AccountService {
                 if (updateBalance) {
                     account.setBalance(accountBalances.getBalance());
                     account.setBalanceUpdateDate(requestBalanceDate);
-                    accountRepo.save(account);
+                    Account save = accountRepo.save(account);
+                    log.info("Updated Account Balance {}", save);
                 }
             } else {
                 log.info("No account exists in Data-store for {} {}", accountBalances.getBsb(), accountBalances.getIdentification());
@@ -174,12 +181,14 @@ public class AccountService {
                         .createdDate(requestBalanceDate)
                         .interest(interestEarned)
                         .build();
-                accountInterestRepo.save(accountInterest);
+                AccountInterest saveAudit = accountInterestRepo.save(accountInterest);
+                log.info("Create Account Interest 'audit' record {}", saveAudit);
 
                 //update account
                 account.setInterestCalculatedDate(requestBalanceDate);
                 account.setInterest((account.getInterest() == null ? BigDecimal.ZERO : account.getInterest()).add(interestEarned));
-                accountRepo.save(account);
+                Account save = accountRepo.save(account);
+                log.info("Updated Account's Interest {}", save);
             }
         });
     }

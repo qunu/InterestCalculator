@@ -33,3 +33,4 @@ Find Account and set Active to false and Close Date to now if Account still Acti
  - The application is using an in memory H2 database
  - Have not used Interface+Impl coding practice for this small assignment (Can if needed)
  - Unit test are missing for some scenarios
+ - The supplied Json in email was malformed, I corrected it for testing

@@ -17,6 +17,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,7 +36,7 @@ class RestTest {
     private AccountInterestRepo accountInterestRepo;
 
     @Test
-    public void given_OpenAccountRequest_when_multiplyOfSame_then_CreateOneAccount() {
+    void given_OpenAccountRequest_when_multiplyOfSame_then_CreateOneAccount() {
         int bsb = 1;
         int identification = 2;
         LocalDate openingDate = LocalDate.now();
@@ -53,7 +54,7 @@ class RestTest {
     }
 
     @Test
-    public void given_EndOfDayBalancesRequest_when_NoAccountDB_then_DontUpdateOrCreateAccount() {
+    void given_EndOfDayBalancesRequest_when_NoAccountDB_then_DontUpdateOrCreateAccount() {
         int bsb = 1;
         int identification1 = 2;
         int identification2 = 3;
@@ -74,7 +75,7 @@ class RestTest {
     }
 
     @Test
-    public void given_EndOfDayBalancesRequest_when_AccountExists_then_UpdateBalanceAndCalculateInterestAndCreateAuditInterestRecord() {
+    void given_EndOfDayBalancesRequest_when_AccountExists_then_UpdateBalanceAndCalculateInterestAndCreateAuditInterestRecord() {
         int bsb = 1;
         int identification1 = 2;
         int identification2 = 3;
@@ -109,19 +110,23 @@ class RestTest {
     }
 
     @Test
-    public void given_calculateMonthlyInterestRequest_when_AccountExistsAndMultiplyDifferentInterestDaysCalculated_then_ReturnCalculatedInterestForMonth() {
+    void given_calculateMonthlyInterestRequest_when_AccountExistsAndMultiplyDifferentInterestDaysCalculated_then_ReturnCalculatedInterestForMonth() {
         int bsb = 1;
         int identification1 = 2;
-        LocalDate dayBeforeYesterday = LocalDate.of(2022, 2, 1);
-        ;
-        LocalDate yesterday = dayBeforeYesterday.plusDays(1);
-        LocalDate today = yesterday.plusDays(1);
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
+        LocalDate dayBeforeYesterday = today.minusDays(2);
 
         OpenAccount openAccount = OpenAccount.builder().bsb(bsb).identification(identification1).openingDate(dayBeforeYesterday).build();
 
         rest.processAccountOpening(openAccount);
 
-        EndOfDayBalance endOfDayBalance1 = EndOfDayBalance.builder().bsb(bsb).identification(identification1).balance(new BigDecimal(200)).build();
+        EndOfDayBalance endOfDayBalance1 = EndOfDayBalance.builder()
+                .bsb(bsb)
+                .identification(identification1)
+                .balance(new BigDecimal(200))
+                .build();
+
         List<EndOfDayBalance> endOfDayBalance = new ArrayList<>();
         endOfDayBalance.add(endOfDayBalance1);
 
@@ -152,10 +157,22 @@ class RestTest {
         assertEquals(1, allInterest.stream().filter(accountInterest ->
                 accountInterest.getCreatedDate().equals(today)).count());
 
-        ResponseEntity responseEntity = rest.calculateMonthlyInterest("2022-02");
+        ResponseEntity responseEntity = rest.calculateMonthlyInterest(LocalDate.now());
         List<MonthlyInterest> body = (List<MonthlyInterest>) responseEntity.getBody();
         assertEquals(1, body.size());
-        assertEquals(0, body.get(0).getInterest().compareTo(new BigDecimal("0.09")));
+
+
+        BigDecimal dayInterest = new BigDecimal("0.03");
+        BigDecimal monthTotal = new BigDecimal("0.03");
+
+        if (yesterday.getMonth() == today.getMonth()) {
+            monthTotal = monthTotal.add(dayInterest);
+        }
+        if (dayBeforeYesterday.getMonth() == today.getMonth()) {
+            monthTotal = monthTotal.add(dayInterest);
+        }
+
+        assertEquals(0, body.get(0).getInterest().compareTo(monthTotal));
     }
 
 }

@@ -8,7 +8,6 @@ import com.qunu.interest.repository.AccountInterestRepo;
 import com.qunu.interest.repository.AccountRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -16,11 +15,9 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -97,22 +94,19 @@ public class AccountService {
     /**
      * Get all AccountInterest for the month received per account and sum up the interests
      */
-    public List<MonthlyInterest> getMonthlyInterest(String month) {
+    public List<MonthlyInterest> getMonthlyInterest(LocalDate month) {
         List<MonthlyInterest> result = new ArrayList<>();
         List<Account> all = accountRepo.findAll();
         all.forEach(account -> {
-            var totalWrapper = new Object() {
-                BigDecimal monthlyInterestResult = BigDecimal.ZERO;
-            };
-            List<AccountInterest> byAccountIdEquals = accountInterestRepo.findByAccountIdEquals(account.getId());
-            List<AccountInterest> collect = byAccountIdEquals.stream()
-                    .filter(accountInterest -> StringUtils.equals(month, accountInterest.getCreatedDate().format(DateTimeFormatter.ofPattern("yyyy-MM"))))
-                    .collect(Collectors.toList());
 
-            collect.forEach(accountInterest ->
-                    totalWrapper.monthlyInterestResult = totalWrapper.monthlyInterestResult.add(accountInterest.getInterest())
-            );
-            MonthlyInterest monthlyInterest = MonthlyInterest.builder().bsb(account.getBsb()).identification(account.getIdentification()).interest(totalWrapper.monthlyInterestResult).build();
+            BigDecimal monthlyInterestResult = accountInterestRepo
+                    .findByAccountIdEqualsAndCreatedDateYearAndMonth(account.getId(), month.getYear(), month.getMonth().getValue());
+
+            MonthlyInterest monthlyInterest = MonthlyInterest.builder()
+                    .bsb(account.getBsb())
+                    .identification(account.getIdentification())
+                    .interest(monthlyInterestResult).build();
+
             result.add(monthlyInterest);
         });
         return result;

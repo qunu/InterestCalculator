@@ -8,9 +8,11 @@ import com.qunu.interest.services.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -38,7 +40,7 @@ public class Rest {
      * Not using async event so we can return the list of monthly interests per account
      */
     @PutMapping("/calculateMonthlyInterest")
-    public ResponseEntity calculateMonthlyInterest(@RequestParam("month") String month) {
+    public ResponseEntity<List<MonthlyInterest>> calculateMonthlyInterest(@RequestParam("month") @DateTimeFormat(pattern = "yyyy-MM") LocalDate month) {
         List<MonthlyInterest> monthlyInterest = accountService.getMonthlyInterest(month);
         return ResponseEntity.ok().body(monthlyInterest);
     }
